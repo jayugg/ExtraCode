@@ -18,7 +18,7 @@ public class BlockBehaviorBreakSpawner : BlockBehavior
     protected bool spawnAll = false;
     protected string toolCode;
     protected Vec3d spawnOffset;
-    protected bool doPrintDebugLogs;
+    protected bool debugFlag;
     protected bool doDrops;
     protected bool hasSpawned;
 
@@ -35,17 +35,18 @@ public class BlockBehaviorBreakSpawner : BlockBehavior
         this.spawnAll = properties["spawnAll"].AsBool();
         this.toolCode = properties["toolCode"].AsString("");
         this.spawnOffset = properties["spawnOffset"].AsObject<Vec3d>(new Vec3d(0, 0, 0));
-        this.doPrintDebugLogs = properties["doPrintDebugLogs"].AsBool(false);
+        this.debugFlag = properties["debugFlag"].AsBool(false);
         this.doDrops = properties["doDrops"].AsBool();
     }
 
     public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
     {
         base.OnBlockBroken(world, pos, byPlayer, ref handling);
+        if (byPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative && !debugFlag) return;
         handling = EnumHandling.Handled;
-        if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Block broken at {pos}");
+        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Block broken at {pos}");
         if (!HasRequiredTool(byPlayer, pos)) return;
-        world.RegisterCallbackUnique((worldAccessor, blockPos, dt) => SpawnEntities(worldAccessor, blockPos), pos, 50);
+        world.RegisterCallback((worldAccessor, blockPos, dt) => SpawnEntities(worldAccessor, blockPos), pos, 50);
     }
 
     public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, BlockSelection blockSel,
@@ -59,7 +60,7 @@ public class BlockBehaviorBreakSpawner : BlockBehavior
     {
         if (spawnAll)
         {
-            if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawning all entities at {pos}");
+            if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawning all entities at {pos}");
             for (var i = 0; i < entityCodes.Length; i++)
             {
                 if (world.Rand.NextDouble() < entityWeights[i]) SpawnEntity(world, pos, entityCodes[i]);
@@ -74,13 +75,13 @@ public class BlockBehaviorBreakSpawner : BlockBehavior
         EntityProperties entityType = world.GetEntityType(new AssetLocation(entityCode));
         if (entityType == null)
         {
-            if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Entity {entityCode} not found");
+            if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Entity {entityCode} not found");
             return;
         }
         var entity1 = world.ClassRegistry.CreateEntity(entityType);
         entity1.ServerPos.SetPos(pos.X + 0.5 + spawnOffset.X, pos.Y + spawnOffset.Y, pos.Z + 0.5 + spawnOffset.X);
         world.SpawnEntity(entity1);
-        if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawned entity {entityCode} at {pos}");
+        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawned entity {entityCode} at {pos}");
     }
     
     protected bool HasRequiredTool(IPlayer byPlayer, BlockPos pos)
@@ -88,7 +89,7 @@ public class BlockBehaviorBreakSpawner : BlockBehavior
         if (!requiresTool) return true;
         var activeToolCode = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Code.ToString();
         if (WildcardUtil.Match(toolCode, activeToolCode)) return true;
-        if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Tool {toolCode} required to break block at {pos}");
+        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Tool {toolCode} required to break block at {pos}");
         return false;
     }
 }

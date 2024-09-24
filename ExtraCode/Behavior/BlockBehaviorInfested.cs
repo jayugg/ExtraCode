@@ -1,9 +1,6 @@
-using System;
-using ExtraCode.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
 namespace ExtraCode.Behavior;
@@ -11,6 +8,7 @@ namespace ExtraCode.Behavior;
 public class BlockBehaviorInfested : BlockBehaviorBreakSpawner
 {
     private string triggerBlockSelector;
+    private int breakDelay;
     public string TriggerBlockSelector => triggerBlockSelector;
     
     public BlockBehaviorInfested(Block block) : base(block)
@@ -21,6 +19,7 @@ public class BlockBehaviorInfested : BlockBehaviorBreakSpawner
     {
         base.Initialize(properties);
         this.triggerBlockSelector = properties["triggerBlockSelector"].AsString(this.block.Code.ToString());
+        this.breakDelay = properties["breakDelay"].AsInt(150);
     }
 
     public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
@@ -33,7 +32,7 @@ public class BlockBehaviorInfested : BlockBehaviorBreakSpawner
         foreach (BlockFacing facing in BlockFacing.ALLFACES)
         {
             BlockPos neighborPos = pos.AddCopy(facing);
-            world.RegisterCallbackUnique((worldAccessor, blockPos, dt) => BreakNeighborBlock(worldAccessor, blockPos, byPlayer), neighborPos, 200);
+            world.RegisterCallbackUnique((worldAccessor, blockPos, dt) => BreakNeighborBlock(worldAccessor, blockPos, byPlayer), neighborPos, breakDelay);
         }
     }
     
@@ -43,9 +42,9 @@ public class BlockBehaviorInfested : BlockBehaviorBreakSpawner
         var bh = neibBlock.GetBehavior<BlockBehaviorInfested>();
         if (bh == null) return;
         //Debug wildcard match
-        if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorInfested][{neibBlock.Code}] TriggerSelector: {bh.TriggerBlockSelector} TriggerBlock: {neibBlock.Code}");
+        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorInfested][{neibBlock.Code}] TriggerSelector: {bh.TriggerBlockSelector} TriggerBlock: {neibBlock.Code}");
         if (neibBlock.Code == null || !WildcardUtil.Match(bh.TriggerBlockSelector, block.Code.ToString())) return;
-        if (doPrintDebugLogs) ExtraCore.Logger.Warning($"[BehaviorInfested][{neibBlock.Code}] Breaking neighbor block at {pos}");
+        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorInfested][{neibBlock.Code}] Breaking neighbor block at {pos}");
         world.BlockAccessor.BreakBlock(pos, byPlayer);
     }
 }
