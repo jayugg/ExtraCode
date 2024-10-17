@@ -5,3 +5,5 @@ Please check the [example mod](https://mods.vintagestory.at/show/mod/14708) for 
 Currently available classes:
 - [Block Behaviour] `BreakSpawner`: Spawn entities when broken, allows to configure multiple entity codes, set their relative chances, or a required tool for the effect to be in place (allows wildcards selectors). Check example mod for usage.
 - [Block Behaviour] `InfestedBlock`: Inherits from `BreakSpawner`, resembles minecraft's infested rock by breaking the block when a connected infested block is broken. Allows wildcards selectors for what nearby infested blocks will trigger the effect.
+- [Block Behaviour] DropsWhenBrokenWith: Allows to set multiple custom drops based on the tool used to break the block (allows wildcards).
+- [Block Behaviour] CustomDrinkSpeed: Allows to set custom drink speed for containers.
