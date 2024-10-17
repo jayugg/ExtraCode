@@ -1,0 +1,2 @@
+- Added CustomDrinkSpeed behavior for containers which allows to set a custom drink speed for each container using json.
+- Added DropsWhenBrokenWith behavior for blocks which allows to specify drops when the block is broken with a specific item.
