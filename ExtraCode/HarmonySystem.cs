@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
 using ExtraCode.Behavior;
+using ExtraCode.Util;
 using HarmonyLib;
 using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace ExtraCode;
@@ -24,6 +25,32 @@ public class HarmonySystem : ModSystem
     {
         HarmonyInstance.UnpatchAll();
         base.Dispose();
+    }
+    
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(ItemIngot), "OnLoaded")]
+    public static void ItemIngot_OnLoaded_Patch(ItemIngot __instance, ICoreAPI api)
+    {
+        var blisterSteelLike = __instance.Attributes?["blisterSteelLike"]?.AsBool() ?? false;
+
+        if (!(blisterSteelLike))
+            return;
+
+        __instance.SetField("isBlisterSteel", true);
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(ItemWorkItem), "OnLoaded")]
+    public static void ItemWorkItem_OnLoaded_Patch(ItemWorkItem __instance, ICoreAPI api)
+    {
+        var blisterSteelLike = __instance.Attributes?["blisterSteelLike"]?.AsBool() ?? false;
+        var smeltedStack = __instance.CombustibleProps?.SmeltedStack?.ResolvedItemstack;
+        var smeltedStackBlisterSteelLike = smeltedStack?.Attributes?["blisterSteelLike"]?.ToJsonToken()?.ToBool() ?? false;
+
+        if (!(blisterSteelLike && smeltedStackBlisterSteelLike))
+            return;
+
+        __instance.isBlisterSteel = true;
     }
     
     [HarmonyTranspiler]

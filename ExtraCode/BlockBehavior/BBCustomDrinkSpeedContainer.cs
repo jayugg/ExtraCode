@@ -15,6 +15,7 @@ public class BlockBehaviorCustomDrinkSpeedContainer : BlockBehavior
         if (block is BlockLiquidContainerBase container)
         {
             this._container = container;
+            this._drinkSpeed = container.Attributes["drinkSpeed"].AsFloat();
         }
         else
         {
@@ -25,7 +26,7 @@ public class BlockBehaviorCustomDrinkSpeedContainer : BlockBehavior
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        this._drinkSpeed = properties["drinkSpeed"].AsFloat(1f);
+        this._drinkSpeed = properties["drinkSpeed"].AsFloat(_drinkSpeed);
         if (!(this._drinkSpeed <= 0)) return;
         ExtraCore.Logger.Warning($"[BlockBehaviorCustomDrinkSpeedContainer][{block.Code}] Invalid drink speed value: {this._drinkSpeed}");
         this._drinkSpeed = 1f;

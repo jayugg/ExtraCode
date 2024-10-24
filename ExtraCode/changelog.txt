@@ -1,2 +1,3 @@
-- Added CustomDrinkSpeed behavior for containers which allows to set a custom drink speed for each container using json.
-- Added DropsWhenBrokenWith behavior for blocks which allows to specify drops when the block is broken with a specific item.
+- Allow iron bloom and blister steel like mechanics
+- Allows to set metal world properties in domains different than the game domain
+- Allows to json patch the game's metal world properties (normally these get loaded before json patches)

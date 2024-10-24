@@ -72,7 +72,7 @@ public class BlockBehaviorDropsWhenBrokenWith : BlockBehavior
             var resolvedStacks = new List<ItemStack>();
             foreach (var stack in entry.Value)
             {
-                ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] Resolving {stack.Code}");
+                //ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] Resolving {stack.Code}");
                 stack.Resolve(world, $"[{ExtraCore.ModId}]BlockBehaviorDropsWhenBrokenWith");
                 if (stack?.ResolvedItemstack == null)
                 {
