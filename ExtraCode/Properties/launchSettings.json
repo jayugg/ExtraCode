@@ -2,14 +2,14 @@
   "profiles": {
     "Client": {
       "commandName": "Executable",
-      "executablePath": "bash",
-      "commandLineArgs": "-c \"find $(ProjectDir)/bin/$(Configuration) -type f -name '*.dll' -exec rsync -a --delete {} $(VINTAGE_STORY)/Mods/ \\; && $(VINTAGE_STORY)/Vintagestory --tracelog\"",
+      "executablePath": "$(VINTAGE_STORY)/Vintagestory",
+      "commandLineArgs": "--tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
       "workingDirectory": "$(VINTAGE_STORY)"
     },
     "Server": {
       "commandName": "Executable",
-      "executablePath": "bash",
-      "commandLineArgs": "-c \"find $(ProjectDir)/bin/$(Configuration) -type f -name '*.dll' -exec rsync -a --delete {} $(VINTAGE_STORY)/Mods/ \\; && $(VINTAGE_STORY)/VintagestoryServer --tracelog\"",
+      "executablePath": "dotnet",
+      "commandLineArgs": "\"$(VINTAGE_STORY)/VintagestoryServer.dll\" --tracelog --addModPath \"$(ProjectDir)/bin/$(Configuration)/Mods\"",
       "workingDirectory": "$(VINTAGE_STORY)"
     }
   }

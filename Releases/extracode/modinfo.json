@@ -1,0 +1,13 @@
+{
+    "type": "code",
+    "modid": "extracode",
+    "name": "ExtraCode",
+    "authors": [
+        "jayu"
+    ],
+    "description": "Extra class and behaviors for content modders",
+    "version": "1.2.1",
+    "dependencies": {
+        "game": ""
+    }
+}

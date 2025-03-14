@@ -1,13 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using ExtraCode.Behavior;
 using ExtraCode.Items;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
-
-[assembly: ModInfo(name: "ExtraCode", modID: "extracode", Side = "Universal", Version = "1.2.0", Authors = new[] { "jayugg" },
-    Description = "Extra class and behaviors for content modders ")]
 
 namespace ExtraCode
 {
