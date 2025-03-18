@@ -1,3 +1,1 @@
-- Allow iron bloom and blister steel like mechanics
-- Allows to set metal world properties in domains different than the game domain
-- Allows to json patch the game's metal world properties (normally these get loaded before json patches)
+- Recompiled for 1.20.5
