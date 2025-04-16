@@ -7,89 +7,84 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace ExtraCode.Behavior;
+namespace ExtraCode.BlockBehavior;
 
-public class BlockBehaviorBreakSpawner : BlockBehavior
+public class BlockBehaviorBreakSpawner(Block block) : Vintagestory.API.Common.BlockBehavior(block)
 {
-
-    protected string[] entityCodes;
-    protected int[] entityWeights;
-    protected bool requiresTool = false;
-    protected bool spawnAll = false;
-    protected string toolCode;
-    protected Vec3d spawnOffset;
-    protected bool debugFlag;
-    protected bool doDrops;
-    protected bool hasSpawned;
-
-    public BlockBehaviorBreakSpawner(Block block) : base(block)
-    {
-    }
+    protected string[] EntityCodes;
+    protected int[] EntityWeights;
+    protected bool RequiresTool = false;
+    protected bool SpawnAll = false;
+    protected string ToolCode;
+    protected Vec3d SpawnOffset;
+    protected bool DebugFlag;
+    protected bool DoDrops;
+    protected bool HasSpawned;
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        this.entityCodes = properties["entityCodes"].AsArray<string>(Array.Empty<string>());
-        this.entityWeights = properties["entityWeights"].AsArray<int>(entityCodes.Length > 0 ? entityCodes.Select(_ => 1).ToArray() : Array.Empty<int>());
-        this.requiresTool = properties["requiresTool"].AsBool();
-        this.spawnAll = properties["spawnAll"].AsBool();
-        this.toolCode = properties["toolCode"].AsString("");
-        this.spawnOffset = properties["spawnOffset"].AsObject<Vec3d>(new Vec3d(0, 0, 0));
-        this.debugFlag = properties["debugFlag"].AsBool(false);
-        this.doDrops = properties["doDrops"].AsBool();
+        EntityCodes = properties["entityCodes"].AsArray<string>([]);
+        EntityWeights = properties["entityWeights"].AsArray<int>(EntityCodes.Length > 0 ? EntityCodes.Select(_ => 1).ToArray() : []);
+        RequiresTool = properties["requiresTool"].AsBool();
+        SpawnAll = properties["spawnAll"].AsBool();
+        ToolCode = properties["toolCode"].AsString("");
+        SpawnOffset = properties["spawnOffset"].AsObject<Vec3d>(new Vec3d(0, 0, 0));
+        DebugFlag = properties["debugFlag"].AsBool(false);
+        DoDrops = properties["doDrops"].AsBool();
     }
 
     public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
     {
         base.OnBlockBroken(world, pos, byPlayer, ref handling);
-        if (byPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative && !debugFlag) return;
+        if (byPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative && !DebugFlag) return;
         handling = EnumHandling.Handled;
-        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Block broken at {pos}");
+        if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Block broken at {pos}");
         if (!HasRequiredTool(byPlayer, pos)) return;
-        world.RegisterCallback((worldAccessor, blockPos, dt) => SpawnEntities(worldAccessor, blockPos), pos, 50);
+        world.RegisterCallback((worldAccessor, blockPos, _) => SpawnEntities(worldAccessor, blockPos), pos, 50);
     }
 
     public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, BlockSelection blockSel,
         float dropQuantityMultiplier, ref EnumHandling bhHandling)
     {
-        if (!doDrops || byEntity is EntityPlayer entityPlayer && !HasRequiredTool(entityPlayer.Player, blockSel?.Position)) dropQuantityMultiplier = 0;
+        if (!DoDrops || byEntity is EntityPlayer entityPlayer && !HasRequiredTool(entityPlayer.Player, blockSel?.Position)) dropQuantityMultiplier = 0;
         return base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel, dropQuantityMultiplier, ref bhHandling);
     }
 
     protected virtual void SpawnEntities(IWorldAccessor world, BlockPos pos)
     {
-        if (spawnAll)
+        if (SpawnAll)
         {
-            if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawning all entities at {pos}");
-            for (var i = 0; i < entityCodes.Length; i++)
+            if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawning all entities at {pos}");
+            for (var i = 0; i < EntityCodes.Length; i++)
             {
-                if (world.Rand.NextDouble() < entityWeights[i]) SpawnEntity(world, pos, entityCodes[i]);
+                if (world.Rand.NextDouble() < EntityWeights[i]) SpawnEntity(world, pos, EntityCodes[i]);
             }
             return;
         }
-        SpawnEntity(world, pos, entityCodes.RandomElementByWeight(code => entityWeights[Array.IndexOf(entityCodes, code)]));
+        SpawnEntity(world, pos, EntityCodes.RandomElementByWeight(code => EntityWeights[Array.IndexOf(EntityCodes, code)]));
     }
 
     protected virtual void SpawnEntity(IWorldAccessor world, BlockPos pos, string entityCode)
     {
-        EntityProperties entityType = world.GetEntityType(new AssetLocation(entityCode));
+        var entityType = world.GetEntityType(new AssetLocation(entityCode));
         if (entityType == null)
         {
-            if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Entity {entityCode} not found");
+            if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Entity {entityCode} not found");
             return;
         }
         var entity1 = world.ClassRegistry.CreateEntity(entityType);
-        entity1.ServerPos.SetPos(pos.X + 0.5 + spawnOffset.X, pos.Y + spawnOffset.Y, pos.Z + 0.5 + spawnOffset.X);
+        entity1.ServerPos.SetPos(pos.X + 0.5 + SpawnOffset.X, pos.Y + SpawnOffset.Y, pos.Z + 0.5 + SpawnOffset.X);
         world.SpawnEntity(entity1);
-        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawned entity {entityCode} at {pos}");
+        if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Spawned entity {entityCode} at {pos}");
     }
     
     protected bool HasRequiredTool(IPlayer byPlayer, BlockPos pos)
     {
-        if (!requiresTool) return true;
+        if (!RequiresTool) return true;
         var activeToolCode = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Code.ToString();
-        if (WildcardUtil.Match(toolCode, activeToolCode)) return true;
-        if (debugFlag) ExtraCore.Logger.Warning($"[BehaviorBreakSpawner][{block.Code}] Tool {toolCode} required to break block at {pos}");
+        if (WildcardUtil.Match(ToolCode, activeToolCode)) return true;
+        if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Tool {ToolCode} required to break block at {pos}");
         return false;
     }
 }

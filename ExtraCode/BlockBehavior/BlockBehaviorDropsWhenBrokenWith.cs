@@ -1,52 +1,45 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using ExtraCode.Util;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace ExtraCode.Behavior;
+namespace ExtraCode.BlockBehavior;
 
-public class BlockBehaviorDropsWhenBrokenWith : BlockBehavior
+public class BlockBehaviorDropsWhenBrokenWith(Block block) : Vintagestory.API.Common.BlockBehavior(block)
 {
     private Dictionary<string, ItemStack[]> _resolvedDropMap = new();
     private Dictionary<string, JsonItemStack[]> _dropMap = new();
-    public BlockBehaviorDropsWhenBrokenWith(Block block) : base(block)
-    {
-    }
-    
+
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        this._dropMap = properties["dropMap"].AsObject<Dictionary<string, JsonItemStack[]>>() ?? new();
+        _dropMap = properties["dropMap"].AsObject<Dictionary<string, JsonItemStack[]>>() ?? new Dictionary<string, JsonItemStack[]>();
     }
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref float dropChanceMultiplier,
         ref EnumHandling handling)
     {
-        ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] GetDrops");
-        if (this._dropMap == null) ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] dropMap is null");
-        ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] dropMap: {this._dropMap.Count}");
-        foreach (var entry in this._dropMap)
+        ExtraCore.Logger?.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] GetDrops");
+        ExtraCore.Logger?.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] dropMap: {_dropMap.Count}");
+        foreach (var entry in _dropMap)
         {
             var itemStacks = string.Join(", ", entry.Value?.Select(stack1 => stack1.ToString()) ?? Array.Empty<string>());
-            ExtraCore.Logger.Warning($"Key: {entry.Key}, Value: [{itemStacks}]");
+            ExtraCore.Logger?.Warning($"Key: {entry.Key}, Value: [{itemStacks}]");
         }
-        ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] resolvedDropMap: {this._resolvedDropMap.Count}");
-        foreach (var entry in this._resolvedDropMap)
+        ExtraCore.Logger?.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] resolvedDropMap: {_resolvedDropMap.Count}");
+        foreach (var entry in _resolvedDropMap)
         {
             var itemStacks = string.Join(", ", entry.Value?.Select(stack1 => stack1.ToString()) ?? Array.Empty<string>());
-            ExtraCore.Logger.Warning($"Key: {entry.Key}, Value: [{itemStacks}]");
+            ExtraCore.Logger?.Warning($"Key: {entry.Key}, Value: [{itemStacks}]");
         }
         if (byPlayer?.Entity == null) return base.GetDrops(world, pos, byPlayer, ref dropChanceMultiplier, ref handling);
         var breakToolCode = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Code.ToString();
         var drops = GetDropsForTool(breakToolCode);
         if (drops.Length == 0) return base.GetDrops(world, pos, byPlayer, ref dropChanceMultiplier, ref handling);
-        ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] GetDrops: {drops.Length} drops");
+        ExtraCore.Logger?.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] GetDrops: {drops.Length} drops");
         handling = EnumHandling.PreventDefault;
         return drops;
     }
@@ -54,33 +47,31 @@ public class BlockBehaviorDropsWhenBrokenWith : BlockBehavior
     private ItemStack[] GetDropsForTool(string toolCode)
     {
         var returnStacks = new List<ItemStack>();
-        foreach (var entry in this._resolvedDropMap)
+        foreach (var entry in _resolvedDropMap)
         {
-            if (WildcardUtil.Match(entry.Key, toolCode))
-            {
-                if (entry.Value == null) continue;
-                returnStacks.AddRange(entry.Value);
-            }
+            if (!WildcardUtil.Match(entry.Key, toolCode)) continue;
+            if (entry.Value == null) continue;
+            returnStacks.AddRange(entry.Value);
         }
         return returnStacks.ToArray();
     }
 
     public void ResolveDrops(IWorldAccessor world)
     {
-        foreach (var entry in this._dropMap)
+        foreach (var entry in _dropMap)
         {
             var resolvedStacks = new List<ItemStack>();
             foreach (var stack in entry.Value)
             {
                 //ExtraCore.Logger.Warning($"[BlockBehaviorDropsWhenBrokenWith][{block.Code}] Resolving {stack.Code}");
-                stack.Resolve(world, $"[{ExtraCore.ModId}]BlockBehaviorDropsWhenBrokenWith");
-                if (stack?.ResolvedItemstack == null)
+                if (stack.Resolve(world, $"[{ExtraCore.ModId}]BlockBehaviorDropsWhenBrokenWith") &&
+                     stack.ResolvedItemstack == null)
                 {
                     continue;
                 }
                 resolvedStacks.Add(stack.ResolvedItemstack.Clone());
             }
-            this._resolvedDropMap.Add(entry.Key, resolvedStacks.ToArray());
+            _resolvedDropMap.Add(entry.Key, resolvedStacks.ToArray());
         }
     }
 }
