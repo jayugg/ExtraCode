@@ -3,6 +3,6 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
-Releases/
+Releases/**/*
 
 *.DS_Store

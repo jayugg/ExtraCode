@@ -32,18 +32,22 @@ public class BlockEntityFruitPressPatch
             var prevCode = i > 0 ? codes[i - 1] : null;
             var code = codes[i];
             if (prevCode == null)
-                continue;
-            if (prevCode.opcode == OpCodes.Callvirt &&
-                prevCode.operand is MethodInfo methodInfo &&
-                methodInfo == CapacityLitresGetter &&
-                code.opcode == OpCodes.Ldc_R4 &&
-                code.operand is float maxContainerCapacityLitres &&
-                Math.Abs(maxContainerCapacityLitres - 20f) < 1e-5)
+                yield return code;
+            else if (prevCode.opcode == OpCodes.Callvirt &&
+                     prevCode.operand is MethodInfo methodInfo &&
+                     methodInfo == CapacityLitresGetter &&
+                     code.opcode == OpCodes.Ldc_R4 &&
+                     code.operand is float maxContainerCapacityLitres &&
+                     Math.Abs(maxContainerCapacityLitres - 20f) < 1e-5)
             {
-                // Replace Ldc_R4 20 with a call to GetMaxContainerCapacityLitres
+                // Insert load of instance (ldarg.0) before calling GetMaxContainerCapacityLitres
+                yield return new CodeInstruction(OpCodes.Ldarg_0);
                 yield return new CodeInstruction(OpCodes.Call, MaxContainerCapacityLitresGetter);
             }
-            yield return code;
+            else
+            {
+                yield return code;
+            }
         }
     }
 }
