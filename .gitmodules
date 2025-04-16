@@ -1,3 +1,3 @@
 [submodule "ExtraCodeTest"]
 	path = ExtraCodeTest
-	url = ./ExtraCodeTest
+	url = https://github.com/jayugg/ExtraCodeTest.git
