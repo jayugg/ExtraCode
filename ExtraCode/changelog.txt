@@ -1,1 +1,2 @@
-- Recompiled for 1.20.5
+- Allow "maxContainerCapacityLitres" attribute in fruit press to set the max capacity of containers
+that can be used with the fruit press
