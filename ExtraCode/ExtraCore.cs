@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using ExtraCode.BlockBehavior;
+using ExtraCode.BlockBehaviors;
 using ExtraCode.Items;
 using JetBrains.Annotations;
 using Vintagestory.API.Common;
@@ -26,8 +26,10 @@ public class ExtraCore : ModSystem
         api.RegisterBlockBehaviorClass("InfestedBlock", typeof(BlockBehaviorInfested));
         api.RegisterBlockBehaviorClass("CustomDrinkSpeed", typeof(BlockBehaviorCustomDrinkSpeedContainer));
         api.RegisterBlockBehaviorClass("DropsWhenBrokenWith", typeof(BlockBehaviorDropsWhenBrokenWith));
+        api.RegisterBlockBehaviorClass("InfestableBlock", typeof(BlockBehaviorInfestable));
         Logger?.Notification("Registered extra behaviors");
         api.RegisterItemClass("ItemMetalBloom", typeof(ItemMetalBloom));
+        api.RegisterItemClass("ItemBaseShield", typeof(ItemBaseShield));
         Logger?.Notification("Registered extra item classes");
     }
 

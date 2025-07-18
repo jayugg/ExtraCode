@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Vintagestory.API.Common;
 
+#nullable enable
 namespace ExtraCode.Util;
 
 public static class Extensions

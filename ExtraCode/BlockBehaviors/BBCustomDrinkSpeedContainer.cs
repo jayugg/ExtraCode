@@ -2,7 +2,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
-namespace ExtraCode.BlockBehavior;
+namespace ExtraCode.BlockBehaviors;
 
 public class BlockBehaviorCustomDrinkSpeedContainer : Vintagestory.API.Common.BlockBehavior
 {

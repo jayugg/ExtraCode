@@ -1,36 +1,45 @@
 using System;
 using System.Linq;
 using ExtraCode.Util;
+using JetBrains.Annotations;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace ExtraCode.BlockBehavior;
+#nullable enable
+namespace ExtraCode.BlockBehaviors;
 
-public class BlockBehaviorBreakSpawner(Block block) : Vintagestory.API.Common.BlockBehavior(block)
+public class BlockBehaviorBreakSpawner(Block block) : BlockBehavior(block)
 {
     protected string[] EntityCodes;
     protected int[] EntityWeights;
-    protected bool RequiresTool = false;
-    protected bool SpawnAll = false;
+    protected bool RequiresTool;
+    protected bool SpawnAll;
     protected string ToolCode;
+    protected JsonItemStack? ToolStack;
     protected Vec3d SpawnOffset;
     protected bool DebugFlag;
     protected bool DoDrops;
-    protected bool HasSpawned;
+
+    public override void OnLoaded(ICoreAPI api)
+    {
+        base.OnLoaded(api);
+        ToolStack?.Resolve(api.World, "BlockBehaviorBreakSpawner");
+    }
 
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
         EntityCodes = properties["entityCodes"].AsArray<string>([]);
-        EntityWeights = properties["entityWeights"].AsArray<int>(EntityCodes.Length > 0 ? EntityCodes.Select(_ => 1).ToArray() : []);
+        EntityWeights = properties["entityWeights"].AsArray(EntityCodes.Length > 0 ? EntityCodes.Select(_ => 1).ToArray() : []);
         RequiresTool = properties["requiresTool"].AsBool();
         SpawnAll = properties["spawnAll"].AsBool();
         ToolCode = properties["toolCode"].AsString("");
-        SpawnOffset = properties["spawnOffset"].AsObject<Vec3d>(new Vec3d(0, 0, 0));
-        DebugFlag = properties["debugFlag"].AsBool(false);
+        ToolStack = properties["toolStack"].AsObject<JsonItemStack>();
+        SpawnOffset = properties["spawnOffset"].AsObject(new Vec3d(0, 0, 0));
+        DebugFlag = properties["debugFlag"].AsBool();
         DoDrops = properties["doDrops"].AsBool();
     }
 
@@ -82,8 +91,11 @@ public class BlockBehaviorBreakSpawner(Block block) : Vintagestory.API.Common.Bl
     protected bool HasRequiredTool(IPlayer byPlayer, BlockPos pos)
     {
         if (!RequiresTool) return true;
-        var activeToolCode = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Code.ToString();
-        if (WildcardUtil.Match(ToolCode, activeToolCode)) return true;
+        var heldStack = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
+        var activeToolCode = heldStack.Collectible.Code.ToString();
+        if (WildcardUtil.Match(ToolCode, activeToolCode) ||
+            ToolStack?.Matches(byPlayer.Entity.World, heldStack) == true)
+            return true;
         if (DebugFlag) ExtraCore.Logger?.Warning($"[BehaviorBreakSpawner][{block.Code}] Tool {ToolCode} required to break block at {pos}");
         return false;
     }

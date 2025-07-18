@@ -6,7 +6,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace ExtraCode.BlockBehavior;
+namespace ExtraCode.BlockBehaviors;
 
 public class BlockBehaviorDropsWhenBrokenWith(Block block) : Vintagestory.API.Common.BlockBehavior(block)
 {

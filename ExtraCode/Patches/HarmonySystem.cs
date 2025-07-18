@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using ExtraCode.BlockBehavior;
+using ExtraCode.BlockBehaviors;
 using HarmonyLib;
 using JetBrains.Annotations;
 using Vintagestory.API.Common;
