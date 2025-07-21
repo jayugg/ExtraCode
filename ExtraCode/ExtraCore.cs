@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using ExtraCode.BlockBehaviors;
+using ExtraCode.CollectibleBehaviors;
 using ExtraCode.Items;
 using JetBrains.Annotations;
 using Vintagestory.API.Common;
@@ -22,6 +23,7 @@ public class ExtraCore : ModSystem
         
     public override void Start(ICoreAPI api)
     {
+        api.RegisterCollectibleBehaviorClass("AnvilWorkable", typeof(CollectibleBehaviorAnvilWorkable));
         api.RegisterBlockBehaviorClass("BreakSpawner", typeof(BlockBehaviorBreakSpawner));
         api.RegisterBlockBehaviorClass("InfestedBlock", typeof(BlockBehaviorInfested));
         api.RegisterBlockBehaviorClass("CustomDrinkSpeed", typeof(BlockBehaviorCustomDrinkSpeedContainer));
