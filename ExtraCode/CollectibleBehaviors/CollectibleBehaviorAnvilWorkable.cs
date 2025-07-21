@@ -12,12 +12,18 @@ namespace ExtraCode.CollectibleBehaviors;
 public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : CollectibleBehavior(collObj), IAnvilWorkable
 {
     private ICoreAPI? Api { get; set; }
-    private byte[,,] Voxels => GenVoxelsFromJsonPattern(JsonPattern);
+    private byte[,,] Voxels => HasExtraVoxels ? 
+        GenVoxelsFromJsonPatternWithExtra(JsonPattern, Api?.World.Rand, ExtraVoxelChance) :
+        GenVoxelsFromJsonPattern(JsonPattern);
     private string[][] JsonPattern { get; set; } = [];
+    private bool HasExtraVoxels { get; set; } = false;
+    private float ExtraVoxelChance { get; set; } = 0.5f;
     
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
+        HasExtraVoxels = properties["extraVoxels"].Exists && properties["extraVoxels"].AsBool();
+        ExtraVoxelChance = properties["extraVoxelChance"].AsFloat(0.5f);
         try
         {
             JsonPattern = properties["voxels"].AsArray()
@@ -98,25 +104,57 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
     public EnumHelveWorkableMode GetHelveWorkableMode(ItemStack stack, BlockEntityAnvil beAnvil) =>
         EnumHelveWorkableMode.NotWorkable;
 
-    public int VoxelCountForHandbook(ItemStack stack) => MaterialCount(Voxels);
+    // Only use always present voxels for handbook
+    public int VoxelCountForHandbook(ItemStack stack) => MaterialCount(GenVoxelsFromJsonPattern(JsonPattern));
     
+    /// <summary>
+    /// Counts the number of voxels with material type 1 (full voxels).
+    /// </summary>
+    /// <param name="voxels">The 3D array of voxels.</param>
+    public static int MaterialCount(byte[,,] voxels)
+    {
+        return voxels.Cast<byte>().Count(voxel => voxel == 1);
+    }
+
     /// <summary>
     /// Generates voxels from a JSON pattern.
     /// The pattern is expected to be a 3D array of strings,
     /// where each string represents a layer of the recipe.
     /// Each character in the string can be:
     /// '#' for a full voxel,
-    /// 's' for a slag voxel,
-    /// '_' or ' ' for an empty voxel.
+    /// '*' for a slag voxel,
+    /// '_' or any character for an empty voxel.
     /// The generated voxels will be centered in a 16x6x16 array.
     /// </summary>
+    /// <param name="pattern">The JSON pattern to generate voxels from.</param>
     public static byte[,,] GenVoxelsFromJsonPattern(string[][] pattern)
+        => GenVoxelsFromJsonPatternWithExtra(pattern, null, 0f);
+    
+    /// <summary>
+    /// Generates voxels from a JSON pattern with extra voxel chance.
+    /// The pattern is expected to be a 3D array of strings,
+    /// where each string represents a layer of the recipe.
+    /// Each character in the string can be:
+    /// '#' for a full voxel,
+    /// '*' for a slag voxel,
+    /// 'o' for a random full voxel (with a chance defined by extraVoxelChance),
+    /// 'x' for a random slag voxel (with a chance defined by extraVoxelChance),
+    /// '_' or any character for an empty voxel.
+    /// The generated voxels will be centered in a 16x6x16 array.
+    /// </summary>
+    /// <param name="pattern">The JSON pattern to generate voxels from.</param>
+    /// <param name="rand">An optional random number generator. If null, a default one will be used.</param>
+    /// <param name="extraVoxelChance">The chance of generating extra voxels (for 'o' and 'x' characters).</param>
+    public static byte[,,] GenVoxelsFromJsonPatternWithExtra(string[][] pattern, Random? rand, float extraVoxelChance = 0.5f)
     {
+        // Fallback if api is not available
+        if (rand == null)
+            extraVoxelChance = 0f;
         var voxels = new byte[16, 6, 16];
         var length = pattern[0][0].Length;
         var width = pattern[0].Length;
         var height = pattern.Length;
-        // We'll center the recipe to the horizontal middle
+        // Center the recipe to the horizontal middle
         var startX = (16 - width) / 2;
         var startZ = (16 - length) / 2;
         for (var x = 0; x < Math.Min(width, 16); x++)
@@ -125,23 +163,19 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
             {
                 for (var z = 0; z < Math.Min(length, 16); z++)
                 {
-                    voxels[z + startZ, y, x + startX] =
-                        pattern[y][x][z] == '#'                 // full
-                            ? (byte)1
-                            : pattern[y][x][z] == '*'           // slag
-                                ? (byte)2                     
-                                : (byte)0;                      // empty (_ or space)
+                    var c = pattern[y][x][z];
+                    byte b = c switch
+                    {
+                        '#' => 1,  // always full
+                        '*' => 2,  // always slag
+                        'o' => rand?.NextDouble() < extraVoxelChance ? (byte)1 : (byte)0,  // random full
+                        'x' => rand?.NextDouble() < extraVoxelChance ? (byte)2 : (byte)0,  // random slag
+                         _  => 0 // empty (_ or space or anything else)
+                    };
+                    voxels[z + startZ, y, x + startX] = b;
                 }
             }
         }
         return voxels;
-    }
-    
-    /// <summary>
-    /// Counts the number of voxels with material type 1 (full voxels).
-    /// </summary>
-    public static int MaterialCount(byte[,,] voxels)
-    {
-        return voxels.Cast<byte>().Count(voxel => voxel == 1);
     }
 }
