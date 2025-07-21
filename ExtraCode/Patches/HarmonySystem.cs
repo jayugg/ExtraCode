@@ -53,25 +53,21 @@ public class HarmonySystem : ModSystem
     [HarmonyTranspiler, HarmonyPatch(typeof(BlockLiquidContainerBase), "tryEatStop")]
     public static IEnumerable<CodeInstruction> BlockLiquidContainerBase_tryEatStop_Transpiler(IEnumerable<CodeInstruction> instructions)
     {
-        ExtraCore.Logger?.Warning("Patching BlockLiquidContainerBase.tryEatStop");
         var codes = new List<CodeInstruction>(instructions);
+        var getDrinkSpeed = AccessTools.Method(typeof(HarmonySystem), nameof(GetDrinkSpeed));
         for (var i = 0; i < codes.Count; i++)
         {
-            var codeInstruction = codes[i];
-            // Look for the ldc.r4 opcode which loads a float32 (in this case, 1f) onto the evaluation stack
-            if (codeInstruction.opcode != OpCodes.Ldc_R4 ||
-                !(Math.Abs((float)codeInstruction.operand - 1f) < 0.0001)) continue;
-            // Load the instance (this)
-            codes.Insert(i, new CodeInstruction(OpCodes.Ldarg_0));
-            i++;
-            // Call the method to get the drink speed
-            codes.Insert(i, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonySystem), nameof(GetDrinkSpeed))));
-            // Replace the operand with the result of the method call
-            codeInstruction.opcode = OpCodes.Nop; // No operation, as the value is now on the stack
-            break; // Only one occurrence needs to be changed
+            var code = codes[i];
+            if (code.opcode != OpCodes.Ldc_R4 || !(Math.Abs((float)code.operand - 1f) < 0.0001)) continue;
+            // Replace ldc.r4 1 with ldarg.0; call GetDrinkSpeed
+            codes[i] = new CodeInstruction(OpCodes.Ldarg_0);
+            codes.Insert(i + 1, new CodeInstruction(OpCodes.Call, getDrinkSpeed));
+            // (Do not need to increment i since we're done)
+            break;
         }
         return codes;
     }
+
 
     private static float GetDrinkSpeed(object instance)
     {

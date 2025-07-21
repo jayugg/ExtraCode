@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+        <LangVersion>12</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,7 @@
 
     <ItemGroup>
         <Reference Include="VintagestoryAPI">
-            <HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY_1_21_0)/VintagestoryAPI.dll</HintPath>
         </Reference>
     </ItemGroup>
 </Project>

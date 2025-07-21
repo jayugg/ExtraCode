@@ -1,7 +1,10 @@
+using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
+using Vintagestory.GameContent;
 
 #nullable enable
 
@@ -35,30 +38,29 @@ public class ModSystemStopRaiseShieldAnim : ModSystem
     }
 }
 
-public class ItemBaseShield : Item // 1.21.x IAttachableToEntity
+public class ItemBaseShield : Item, IAttachableToEntity
 {
     public const string RaiseShieldLeftAnim  = "raiseshield-left";
     public const string RaiseShieldRightAnim = "raiseshield-right";
-
-    /* 1.21.x stuff
-    IAttachableToEntity? _attachableToEntity;
+    
+    protected IAttachableToEntity? AttachableToEntity;
     #region IAttachableToEntity
     public int RequiresBehindSlots { get; set; } = 0;
-    string? IAttachableToEntity.GetCategoryCode(ItemStack stack) => _attachableToEntity?.GetCategoryCode(stack);
-    CompositeShape? IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode) => _attachableToEntity?.GetAttachedShape(stack, slotCode);
-    string[]? IAttachableToEntity.GetDisableElements(ItemStack stack) => _attachableToEntity?.GetDisableElements(stack);
-    string[]? IAttachableToEntity.GetKeepElements(ItemStack stack) => _attachableToEntity?.GetKeepElements(stack);
-    string? IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => _attachableToEntity?.GetTexturePrefixCode(stack);
+    string? IAttachableToEntity.GetCategoryCode(ItemStack stack) => AttachableToEntity?.GetCategoryCode(stack);
+    CompositeShape? IAttachableToEntity.GetAttachedShape(ItemStack stack, string slotCode) => AttachableToEntity?.GetAttachedShape(stack, slotCode);
+    string[]? IAttachableToEntity.GetDisableElements(ItemStack stack) => AttachableToEntity?.GetDisableElements(stack);
+    string[]? IAttachableToEntity.GetKeepElements(ItemStack stack) => AttachableToEntity?.GetKeepElements(stack);
+    string? IAttachableToEntity.GetTexturePrefixCode(ItemStack stack) => AttachableToEntity?.GetTexturePrefixCode(stack);
     void IAttachableToEntity.CollectTextures(ItemStack itemstack, Shape intoShape, string texturePrefixCode, Dictionary<string, CompositeTexture> intoDict)
-    => _attachableToEntity?.CollectTextures(itemstack, intoShape, texturePrefixCode, intoDict);
+    => AttachableToEntity?.CollectTextures(itemstack, intoShape, texturePrefixCode, intoDict);
     public bool IsAttachable(Entity toEntity, ItemStack itemStack) => Attributes["isAttachable"].AsBool(true);
+
     #endregion
     public override void OnLoaded(ICoreAPI coreApi)
     {
         base.OnLoaded(coreApi);
-        _attachableToEntity = IAttachableToEntity.FromAttributes(this);
+        AttachableToEntity = IAttachableToEntity.FromAttributes(this);
     }
-    */
     
     private static void SetAnimActive(IAnimationManager anim, string name, bool active)
     {
@@ -66,8 +68,6 @@ public class ItemBaseShield : Item // 1.21.x IAttachableToEntity
         if (active && !isActive) anim.StartAnimation(name);
         else if (!active && isActive) anim.StopAnimation(name);
     }
-
-
 
     public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
     {

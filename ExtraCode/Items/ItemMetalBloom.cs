@@ -90,4 +90,6 @@ public class ItemMetalBloom : Item, IAnvilWorkable
     {
       return (EnumHelveWorkableMode) 1;
     }
-  }
+
+    public virtual int VoxelCountForHandbook(ItemStack stack) => 42;
+}
