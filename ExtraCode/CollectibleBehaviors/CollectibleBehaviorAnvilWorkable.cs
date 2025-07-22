@@ -13,10 +13,10 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
 {
     private ICoreAPI? Api { get; set; }
     private byte[,,] Voxels => HasExtraVoxels ? 
-        GenVoxelsFromJsonPatternWithExtra(JsonPattern, Api?.World.Rand, ExtraVoxelChance) :
-        GenVoxelsFromJsonPattern(JsonPattern);
-    private string[][] JsonPattern { get; set; } = [];
-    private bool HasExtraVoxels { get; set; } = false;
+        GenVoxelsFromJsonPatternWithExtra(Pattern, Api?.World.Rand, ExtraVoxelChance) :
+        GenVoxelsFromJsonPattern(Pattern);
+    private string[][] Pattern { get; set; } = [];
+    private bool HasExtraVoxels { get; set; }
     private float ExtraVoxelChance { get; set; } = 0.5f;
     
     public override void Initialize(JsonObject properties)
@@ -24,18 +24,15 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
         base.Initialize(properties);
         HasExtraVoxels = properties["extraVoxels"].Exists && properties["extraVoxels"].AsBool();
         ExtraVoxelChance = properties["extraVoxelChance"].AsFloat(0.5f);
-        try
+        var jsonPattern = properties["voxels"].AsArray();
+        if (jsonPattern is { Length: > 0 })
         {
-            JsonPattern = properties["voxels"].AsArray()
+            Pattern = jsonPattern
                 .Select(s => 
                     s.AsArray()
                         .Select(t => t.AsString())
                         .ToArray()
                 ).ToArray();
-        }
-        catch (Exception)
-        {
-            // ignored
         }
     }
 
@@ -105,7 +102,7 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
         EnumHelveWorkableMode.NotWorkable;
 
     // Only use always present voxels for handbook
-    public int VoxelCountForHandbook(ItemStack stack) => MaterialCount(GenVoxelsFromJsonPattern(JsonPattern));
+    public int VoxelCountForHandbook(ItemStack stack) => MaterialCount(GenVoxelsFromJsonPattern(Pattern));
     
     /// <summary>
     /// Counts the number of voxels with material type 1 (full voxels).
