@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Cake.Common;
 using Cake.Common.IO;
 using Cake.Common.Tools.DotNet;
@@ -29,6 +30,7 @@ public class BuildContext : FrostingContext
     public const string ProjectName = "ExtraCode";
     public string BuildConfiguration { get; }
     public string Version { get; }
+    public string GameVersion { get; }
     public string Name { get; }
     public bool SkipJsonValidation { get; }
 
@@ -40,6 +42,7 @@ public class BuildContext : FrostingContext
         var modInfo = context.DeserializeJsonFromFile<ModInfo>($"../{ProjectName}/modinfo.json");
         Version = modInfo.Version;
         Name = modInfo.ModID;
+        GameVersion = modInfo.Dependencies.First(d => d.ModID == "game")?.Version ?? "";
     }
 }
 
@@ -113,7 +116,7 @@ public sealed class PackageTask : FrostingTask<BuildContext>
             context.CopyFile($"../{BuildContext.ProjectName}/modicon.png", $"../Releases/{context.Name}/modicon.png");
         }
 
-        context.Zip($"../Releases/{context.Name}", $"../Releases/{context.Name}_{context.Version}.zip");
+        context.Zip($"../Releases/{context.Name}", $"../Releases/{context.Name}_{context.Version}_{context.GameVersion}.zip");
     }
 }
 
