@@ -13,7 +13,7 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
 {
     private ICoreAPI? Api { get; set; }
     private byte[,,] Voxels => HasExtraVoxels ? 
-        GenVoxelsFromJsonPatternWithExtra(Pattern, Api?.World.Rand, ExtraVoxelChance) :
+        GenVoxelsFromJsonPatternWithExtra(Pattern, Api?.World.Rand, HasExtraVoxels) :
         GenVoxelsFromJsonPattern(Pattern);
     private string[][] Pattern { get; set; } = [];
     private bool HasExtraVoxels { get; set; }
@@ -22,16 +22,15 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
     public override void Initialize(JsonObject properties)
     {
         base.Initialize(properties);
-        HasExtraVoxels = properties["extraVoxels"].Exists && properties["extraVoxels"].AsBool();
-        ExtraVoxelChance = properties["extraVoxelChance"].AsFloat(0.5f);
-        var jsonPattern = properties["voxels"].AsArray();
+        HasExtraVoxels = properties["hasExtraVoxels"].Exists && properties["hasExtraVoxels"].AsBool();
+        ExtraVoxelChance = properties["extraVoxelChance"].Exists ? properties["extraVoxelChance"].AsFloat(0.5f) : 0f;
+        var jsonPattern = properties["voxels"].Exists ? properties["voxels"].AsArray() : null;
         if (jsonPattern is { Length: > 0 })
         {
-            Pattern = jsonPattern
+            var jsonArray = jsonPattern.Select(s => s.AsArray()).ToArray();
+            Pattern = jsonArray
                 .Select(s => 
-                    s.AsArray()
-                        .Select(t => t.AsString())
-                        .ToArray()
+                    s.Select(t => t.AsString()).ToArray()
                 ).ToArray();
         }
     }
@@ -125,7 +124,7 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
     /// </summary>
     /// <param name="pattern">The JSON pattern to generate voxels from.</param>
     public static byte[,,] GenVoxelsFromJsonPattern(string[][] pattern)
-        => GenVoxelsFromJsonPatternWithExtra(pattern, null, 0f);
+        => GenVoxelsFromJsonPatternWithExtra(pattern, null, false);
     
     /// <summary>
     /// Generates voxels from a JSON pattern with extra voxel chance.
@@ -136,17 +135,20 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
     /// '*' for a slag voxel,
     /// 'o' for a random full voxel (with a chance defined by extraVoxelChance),
     /// 'x' for a random slag voxel (with a chance defined by extraVoxelChance),
+    /// '?' for a random voxel (either full or slag with 50% chance),
     /// '_' or any character for an empty voxel.
     /// The generated voxels will be centered in a 16x6x16 array.
     /// </summary>
     /// <param name="pattern">The JSON pattern to generate voxels from.</param>
     /// <param name="rand">An optional random number generator. If null, a default one will be used.</param>
+    /// <param name="hasExtraVoxels">Whether to include extra voxels ('o', 'x' and '?' characters).</param>
     /// <param name="extraVoxelChance">The chance of generating extra voxels (for 'o' and 'x' characters).</param>
-    public static byte[,,] GenVoxelsFromJsonPatternWithExtra(string[][] pattern, Random? rand, float extraVoxelChance = 0.5f)
+    public static byte[,,] GenVoxelsFromJsonPatternWithExtra(string[][] pattern, Random? rand, bool hasExtraVoxels = true, float extraVoxelChance = 0.5f)
     {
         // Fallback if api is not available
         if (rand == null)
-            extraVoxelChance = 0f;
+            hasExtraVoxels = false;
+        extraVoxelChance = hasExtraVoxels ? extraVoxelChance : 0;
         var voxels = new byte[16, 6, 16];
         var length = pattern[0][0].Length;
         var width = pattern[0].Length;
@@ -161,15 +163,16 @@ public class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : Colle
                 for (var z = 0; z < Math.Min(length, 16); z++)
                 {
                     var c = pattern[y][x][z];
-                    byte b = c switch
+                    var b = c switch
                     {
-                        '#' => 1,  // always full
-                        '*' => 2,  // always slag
-                        'o' => rand?.NextDouble() < extraVoxelChance ? (byte)1 : (byte)0,  // random full
-                        'x' => rand?.NextDouble() < extraVoxelChance ? (byte)2 : (byte)0,  // random slag
-                         _  => 0 // empty (_ or space or anything else)
+                        '#' => EnumVoxelMaterial.Metal,  // always full
+                        '*' => EnumVoxelMaterial.Slag,  // always slag
+                        'o' => rand?.NextDouble() < extraVoxelChance ? EnumVoxelMaterial.Metal : EnumVoxelMaterial.Empty,  // random full
+                        'x' => rand?.NextDouble() < extraVoxelChance ? EnumVoxelMaterial.Slag : EnumVoxelMaterial.Empty,  // random slag
+                        '?' => hasExtraVoxels ? rand?.NextDouble() < 0.5f ? EnumVoxelMaterial.Metal : EnumVoxelMaterial.Slag : EnumVoxelMaterial.Empty,  // random full/slag
+                         _  => EnumVoxelMaterial.Empty // empty (_ or space or anything else)
                     };
-                    voxels[z + startZ, y, x + startX] = b;
+                    voxels[z + startZ, y, x + startX] = (byte)b;
                 }
             }
         }
